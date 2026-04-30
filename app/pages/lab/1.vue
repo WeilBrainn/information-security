@@ -5,8 +5,10 @@ import {
   generateAlphabetTable, 
   validateShift, 
   getTextStats,
+  generateLetterMappingTable,
   type AlphabetTableItem,
-  type TextStats
+  type TextStats,
+  type LetterMapping
 } from '~/labs/lab1-caesar'
 
 // State
@@ -16,7 +18,9 @@ const shiftValue = ref('4')
 const errorMessage = ref('')
 const isProcessing = ref(false)
 const showTable = ref(false)
+const showLetterTable = ref(true)  // Таблица побуквенного шифрования
 const copied = ref(false)
+const letterMappings = ref<LetterMapping[]>([])  // Данные для таблицы побуквенного шифрования
 
 // Generate alphabet table
 const alphabetTable = computed<AlphabetTableItem[]>(() => generateAlphabetTable())
@@ -30,20 +34,29 @@ const shiftValidation = computed(() => validateShift(shiftValue.value))
 // Encrypt handler
 function handleEncrypt() {
   errorMessage.value = ''
+  letterMappings.value = []
   
   if (!inputText.value.trim()) {
     errorMessage.value = 'Введите текст для шифрования'
     return
   }
   
-  if (!shiftValidation.value.valid && !shiftValidation.value.shift) {
+  // Проверяем валидность сдвига
+  if (!shiftValidation.value.valid) {
     errorMessage.value = shiftValidation.value.error || 'Неверное значение сдвига'
     return
   }
   
   try {
     isProcessing.value = true
+    // Выполняем шифрование
     outputText.value = encryptCaesar(inputText.value, shiftValidation.value.shift)
+    // Генерируем таблицу побуквенного преобразования
+    letterMappings.value = generateLetterMappingTable(
+      inputText.value, 
+      outputText.value, 
+      shiftValidation.value.shift
+    )
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Произошла ошибка при шифровании'
   } finally {
@@ -56,20 +69,29 @@ function handleEncrypt() {
 // Decrypt handler
 function handleDecrypt() {
   errorMessage.value = ''
+  letterMappings.value = []
   
   if (!inputText.value.trim()) {
     errorMessage.value = 'Введите текст для дешифрования'
     return
   }
   
-  if (!shiftValidation.value.valid && !shiftValidation.value.shift) {
+  // Проверяем валидность сдвига
+  if (!shiftValidation.value.valid) {
     errorMessage.value = shiftValidation.value.error || 'Неверное значение сдвига'
     return
   }
   
   try {
     isProcessing.value = true
+    // Выполняем дешифрование
     outputText.value = decryptCaesar(inputText.value, shiftValidation.value.shift)
+    // Генерируем таблицу побуквенного преобразования
+    letterMappings.value = generateLetterMappingTable(
+      inputText.value, 
+      outputText.value, 
+      shiftValidation.value.shift
+    )
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Произошла ошибка при дешифровании'
   } finally {
@@ -84,6 +106,7 @@ function handleClear() {
   inputText.value = ''
   outputText.value = ''
   errorMessage.value = ''
+  letterMappings.value = []  // Очищаем таблицу побуквенного шифрования
 }
 
 // Copy to clipboard
@@ -160,11 +183,11 @@ function swapTexts() {
                     v-model="shiftValue"
                     type="number"
                     min="0"
-                    max="32"
+                    max="33"
                     class="caesar__shift-input"
                     :class="{ 'caesar__shift-input--error': shiftValidation.error && !shiftValidation.valid }"
                   />
-                  <span class="caesar__shift-hint">0–32</span>
+                  <span class="caesar__shift-hint">0–33</span>
                 </div>
                 <p v-if="shiftValidation.error" class="caesar__error-text">
                   {{ shiftValidation.error }}
@@ -293,6 +316,49 @@ function swapTexts() {
                 </span>
               </div>
             </div>
+          </section>
+          
+          <!-- Letter-by-letter encryption table -->
+          <section 
+            v-if="letterMappings.length > 0"
+            v-motion
+            :initial="{ opacity: 0, y: 20 }"
+            :visible="{ opacity: 1, y: 0, transition: { duration: 400 } }"
+            class="caesar__section"
+          >
+            <button class="caesar__toggle" @click="showLetterTable = !showLetterTable">
+              <Icon name="ph:list-numbers-fill" />
+              <span>Побуквенное преобразование ({{ letterMappings.length }} символов)</span>
+              <Icon 
+                :name="showLetterTable ? 'ph:caret-up-bold' : 'ph:caret-down-bold'" 
+                class="caesar__toggle-arrow"
+              />
+            </button>
+            
+            <Transition name="slide">
+              <div v-if="showLetterTable" class="caesar__table-wrap">
+                <table class="caesar__table caesar__table--mapping">
+                  <thead>
+                    <tr>
+                      <th>№</th>
+                      <th>Исходная</th>
+                      <th>Результат</th>
+                      <th>Позиция (исх.)</th>
+                      <th>Позиция (рез.)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="mapping in letterMappings" :key="mapping.index">
+                      <td class="caesar__table-num">{{ mapping.index }}</td>
+                      <td class="caesar__table-char caesar__table-char--original">{{ mapping.originalChar }}</td>
+                      <td class="caesar__table-char caesar__table-char--result">{{ mapping.encryptedChar }}</td>
+                      <td class="caesar__table-code">{{ mapping.originalCode || '—' }}</td>
+                      <td class="caesar__table-code">{{ mapping.encryptedCode || '—' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </Transition>
           </section>
           
           <!-- Alphabet table toggle -->
@@ -880,11 +946,30 @@ function swapTexts() {
     font-size: 1rem;
     font-weight: 600;
     color: var(--color-accent);
+    
+    // Стили для таблицы побуквенного шифрования
+    &--original {
+      color: var(--color-text-primary);
+    }
+    
+    &--result {
+      color: var(--color-success);
+    }
   }
   
   &__table-code {
     color: var(--color-text-secondary);
     font-size: 0.75rem;
+  }
+  
+  // Таблица побуквенного преобразования
+  &__table--mapping {
+    th:nth-child(4),
+    th:nth-child(5),
+    td:nth-child(4),
+    td:nth-child(5) {
+      font-family: var(--font-mono);
+    }
   }
   
   // About

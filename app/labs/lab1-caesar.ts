@@ -146,20 +146,84 @@ export function getTextStats(text: string): TextStats {
 }
 
 // Валидация сдвига
+// Проверяем что сдвиг является допустимым числом от 0 до 33
 export function validateShift(value: string): { valid: boolean; shift: number; error?: string } {
-  if (value.trim() === '') {
+  // Проверяем что строка не пустая (используем String() для безопасной конвертации)
+  const strValue = String(value || '').trim()
+  
+  if (strValue === '') {
     return { valid: false, shift: 0, error: 'Введите значение сдвига' }
   }
   
-  const num = parseInt(value, 10)
+  // Парсим число
+  const num = parseInt(strValue, 10)
   
+  // Проверяем что это валидное число
   if (isNaN(num)) {
     return { valid: false, shift: 0, error: 'Сдвиг должен быть числом' }
   }
   
-  if (num < 0 || num > 32) {
-    return { valid: true, shift: num, error: `Сдвиг нормализован: ${((num % 33) + 33) % 33}` }
+  // Проверяем отрицательные числа - запрещаем их
+  if (num < 0) {
+    return { valid: false, shift: 0, error: 'Сдвиг не может быть отрицательным' }
+  }
+  
+  // Проверяем что сдвиг не больше 33 (размер алфавита)
+  if (num > 33) {
+    return { valid: false, shift: 0, error: 'Сдвиг не может быть больше 33' }
   }
   
   return { valid: true, shift: num }
+}
+
+// Интерфейс для отображения пошагового шифрования
+export interface LetterMapping {
+  index: number           // Порядковый номер буквы
+  originalChar: string    // Исходный символ
+  encryptedChar: string   // Зашифрованный символ
+  originalCode: number    // Код исходного символа в алфавите (позиция)
+  encryptedCode: number   // Код зашифрованного символа в алфавите (позиция)
+}
+
+// Функция для генерации таблицы побуквенного шифрования
+// Показывает как каждая буква преобразуется при шифровании
+export function generateLetterMappingTable(
+  inputText: string, 
+  outputText: string, 
+  shift: number
+): LetterMapping[] {
+  const result: LetterMapping[] = []
+  
+  // Проходим по каждому символу входного текста
+  for (let i = 0; i < inputText.length; i++) {
+    const originalChar = inputText[i]
+    const encryptedChar = outputText[i] || originalChar
+    
+    // Получаем позиции букв в алфавите (индексация с 1)
+    let originalCode = 0
+    let encryptedCode = 0
+    
+    // Проверяем, является ли символ кириллической буквой
+    const upperIndex = CYRILLIC_UPPER.indexOf(originalChar.toUpperCase())
+    if (upperIndex !== -1) {
+      // Буква найдена в алфавите, записываем её позицию (с 1)
+      originalCode = upperIndex + 1
+      
+      // Вычисляем позицию зашифрованной буквы
+      const encryptedUpperIndex = CYRILLIC_UPPER.indexOf(encryptedChar.toUpperCase())
+      if (encryptedUpperIndex !== -1) {
+        encryptedCode = encryptedUpperIndex + 1
+      }
+    }
+    
+    result.push({
+      index: i + 1,
+      originalChar,
+      encryptedChar,
+      originalCode,
+      encryptedCode
+    })
+  }
+  
+  return result
 }

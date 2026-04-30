@@ -2,13 +2,16 @@
 const route = useRoute()
 const labId = computed(() => Number(route.params.id))
 
-// Redirect to lab 1 if it's the specific page
+// Редирект на готовые лабораторные работы
 if (labId.value === 1) {
   navigateTo('/lab/1', { replace: true })
 }
 
+if (labId.value === 2) {
+  navigateTo('/lab/2', { replace: true })
+}
+
 const labTitles: Record<number, string> = {
-  2: 'Лабораторная работа 2',
   3: 'Лабораторная работа 3',
   4: 'Лабораторная работа 4',
   5: 'Лабораторная работа 5',
