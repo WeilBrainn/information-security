@@ -9,6 +9,7 @@ import {
   type GenerationResult,
   type TestResults
 } from '~/labs/lab2-prng'
+import Download from '../../components/download.vue'
 
 // Состояние параметров генератора
 const pValue = ref('11')
@@ -591,6 +592,11 @@ function handleClear() {
       </div>
     </main>
     
+    <Download
+      title="Отчет_лабораторная_работа_2.docx"
+      download="Отчет_лабораторная_работа_2.docx"
+    />
+
     <!-- Footer -->
     <footer class="lab-footer">
       <div class="container">

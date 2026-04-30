@@ -10,6 +10,7 @@ import {
   type TextStats,
   type LetterMapping
 } from '~/labs/lab1-caesar'
+import Download from '../../components/download.vue'
 
 // State
 const inputText = ref('')
@@ -437,6 +438,12 @@ function swapTexts() {
       </div>
     </main>
     
+
+    <Download 
+      title="Отчет_лабораторная_работа_1.docx"
+      download="Отчет_лабораторная_работа_1.docx"
+    />
+    
     <!-- Footer -->
     <footer class="lab-footer">
       <div class="container">
@@ -497,7 +504,13 @@ function swapTexts() {
   &__row {
     display: flex;
     align-items: center;
-    gap: var(--spacing-lg);
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+    
+    @media (min-width: 768px) {
+      gap: var(--spacing-lg);
+      flex-wrap: nowrap;
+    }
   }
   
   &__back {
@@ -512,6 +525,7 @@ function swapTexts() {
     color: var(--color-text-secondary);
     font-size: 0.875rem;
     transition: all var(--transition-normal);
+    flex-shrink: 0;
     
     &:hover {
       color: var(--color-text-primary);
@@ -523,6 +537,8 @@ function swapTexts() {
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
+    flex: 1;
+    min-width: 0;
   }
   
   &__num {
@@ -1042,6 +1058,140 @@ function swapTexts() {
     strong {
       color: var(--color-text-secondary);
     }
+  }
+}
+
+// Report download section
+.report-download {
+  position: relative;
+  z-index: 1;
+  padding: var(--spacing-xl) 0;
+  
+  &__card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    background: var(--color-glass);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--color-glass-border);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    
+    @media (min-width: 768px) {
+      flex-direction: row;
+      text-align: left;
+    }
+  }
+  
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(168, 85, 247, 0.2));
+    border-radius: var(--radius-lg);
+    flex-shrink: 0;
+    
+    svg {
+      width: 32px;
+      height: 32px;
+      color: #22d3ee;
+    }
+  }
+  
+  &__title {
+    flex: 1;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #ffffff;
+  }
+  
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 28px;
+    background: #ffffff;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15);
+    flex-shrink: 0;
+    white-space: nowrap;
+    margin-left: auto;
+    position: relative;
+    overflow: hidden;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(34, 211, 238, 0.3),
+        transparent
+      );
+      transition: left 0.5s ease;
+    }
+    
+    span {
+      color: #0a0a0f;
+      position: relative;
+      z-index: 1;
+    }
+    
+    svg {
+      width: 20px;
+      height: 20px;
+      color: #0a0a0f;
+      position: relative;
+      z-index: 1;
+      transition: transform 0.3s ease;
+    }
+    
+    &:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 30px rgba(255, 255, 255, 0.3);
+      background: #ffffff;
+      
+      &::before {
+        left: 100%;
+      }
+      
+      svg {
+        animation: bounce-down 0.6s ease infinite;
+      }
+    }
+    
+    &:active {
+      transform: translateY(0) scale(0.98);
+    }
+    
+    @media (max-width: 767px) {
+      width: 100%;
+      padding: 14px 20px;
+      margin-left: 0;
+    }
+  }
+}
+
+@keyframes bounce-down {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(3px);
   }
 }
 
