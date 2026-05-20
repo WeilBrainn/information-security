@@ -521,19 +521,48 @@ export function textToHex(text: string): string {
 }
 
 /**
- * Преобразование hex-строки в текст (ASCII)
+ * Преобразование hex-строки в текст (UTF-8)
  * Асимптотика: O(n), где n - длина hex-строки
  */
 export function hexToText(hex: string): string {
-  let text = ''
+  // Преобразуем hex в массив байтов
+  const bytes: number[] = []
   for (let i = 0; i < hex.length; i += 2) {
-    const code = parseInt(hex.substr(i, 2), 16)
-    // Фильтруем непечатаемые символы и padding
-    if (code >= 32 && code < 127) {
-      text += String.fromCharCode(code)
+    bytes.push(parseInt(hex.substr(i, 2), 16))
+  }
+  
+  // Удаляем PKCS7 padding если есть
+  if (bytes.length > 0) {
+    const lastByte = bytes[bytes.length - 1]
+    if (lastByte > 0 && lastByte <= 8) {
+      // Проверяем что это действительно padding
+      let isPadding = true
+      for (let i = bytes.length - lastByte; i < bytes.length; i++) {
+        if (bytes[i] !== lastByte) {
+          isPadding = false
+          break
+        }
+      }
+      if (isPadding) {
+        bytes.splice(bytes.length - lastByte, lastByte)
+      }
     }
   }
-  return text
+  
+  // Декодируем UTF-8
+  try {
+    const uint8Array = new Uint8Array(bytes)
+    return new TextDecoder('utf-8', { fatal: false }).decode(uint8Array)
+  } catch {
+    // Fallback: фильтруем только печатаемые ASCII
+    let text = ''
+    for (const code of bytes) {
+      if (code >= 32 && code < 127) {
+        text += String.fromCharCode(code)
+      }
+    }
+    return text
+  }
 }
 
 /**

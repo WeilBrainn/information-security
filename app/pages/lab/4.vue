@@ -710,7 +710,7 @@ async function handleDecrypt() {
                     <span class="elgamal__stat-value">{{ manualDecryptionResult.decryptionTime.toFixed(3) }} мс</span>
                   </div>
                   <div class="elgamal__stat">
-                    <span class="elgamal__stat-label">��локов</span>
+                    <span class="elgamal__stat-label">блоков</span>
                     <span class="elgamal__stat-value">{{ manualDecryptionResult.ciphertext.length }}</span>
                   </div>
                 </div>

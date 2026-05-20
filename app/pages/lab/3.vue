@@ -40,6 +40,17 @@ const encryptResult = ref<DESResult | null>(null)
 const errorMessage = ref('')
 const isProcessing = ref(false)
 const copied = ref(false)
+const copiedKey = ref(false)
+
+// Вставка результата шифрования для расшифровки
+function pasteToDecrypt() {
+  if (encryptResult.value && encryptResult.value.mode === 'encrypt') {
+    inputText.value = encryptResult.value.output
+    inputMode.value = 'hex'
+    outputText.value = ''
+    encryptResult.value = null
+  }
+}
 
 // Валидация ключа
 const keyValidation = computed(() => validateKey(keyHex.value))
@@ -107,7 +118,8 @@ function handleDecrypt() {
     }
     
     encryptResult.value = decryptDES(inputHex, keyHex.value, true)
-    outputText.value = inputMode.value === 'text' ? hexToText(encryptResult.value.output) : encryptResult.value.output
+    // Всегда преобразуем расшифрованный HEX в текст
+    outputText.value = hexToText(encryptResult.value.output)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Ошибка дешифрования'
   } finally {
@@ -116,11 +128,16 @@ function handleDecrypt() {
 }
 
 // Копирование
-async function copyToClipboard(text: string) {
+async function copyToClipboard(text: string, isKey = false) {
   try {
     await navigator.clipboard.writeText(text)
-    copied.value = true
-    setTimeout(() => { copied.value = false }, 2000)
+    if (isKey) {
+      copiedKey.value = true
+      setTimeout(() => { copiedKey.value = false }, 2000)
+    } else {
+      copied.value = true
+      setTimeout(() => { copied.value = false }, 2000)
+    }
   } catch {
     const textarea = document.createElement('textarea')
     textarea.value = text
@@ -128,6 +145,13 @@ async function copyToClipboard(text: string) {
     textarea.select()
     document.execCommand('copy')
     document.body.removeChild(textarea)
+    if (isKey) {
+      copiedKey.value = true
+      setTimeout(() => { copiedKey.value = false }, 2000)
+    } else {
+      copied.value = true
+      setTimeout(() => { copied.value = false }, 2000)
+    }
   }
 }
 
@@ -473,6 +497,30 @@ async function measureDESSpeed() {
                 </div>
               </div>
               
+              <!-- Key and quick actions for encryption -->
+              <div v-if="encryptResult.mode === 'encrypt'" class="des__quick-actions">
+                <div class="des__key-display">
+                  <span class="des__key-label">Ключ (HEX):</span>
+                  <code class="des__key-value">{{ encryptResult.key }}</code>
+                  <button 
+                    class="des__btn des__btn--small"
+                    @click="copyToClipboard(encryptResult.key, true)"
+                  >
+                    <Icon :name="copiedKey ? 'ph:check-bold' : 'ph:copy'" />
+                    {{ copiedKey ? 'Скопировано' : 'Копировать ключ' }}
+                  </button>
+                </div>
+                <div class="des__action-buttons">
+                  <button 
+                    class="des__btn des__btn--small des__btn--accent"
+                    @click="pasteToDecrypt"
+                  >
+                    <Icon name="ph:arrow-right-bold" />
+                    Расшифровать результат
+                  </button>
+                </div>
+              </div>
+              
               <!-- Blocks toggle -->
               <button class="des__toggle" @click="showBlocks = !showBlocks">
                 <Icon name="ph:list-bullets-fill" />
@@ -761,7 +809,7 @@ async function measureDESSpeed() {
                 
                 <button class="des__btn des__btn--primary" @click="analyzeCompressionRatio">
                   <Icon name="ph:file-zip-fill" />
-                  Анализи��овать
+                  Анализиловать
                 </button>
               </div>
             </div>
@@ -1256,9 +1304,25 @@ async function measureDESSpeed() {
     &--small {
       padding: var(--spacing-xs) var(--spacing-sm);
       font-size: 0.75rem;
-      background: var(--color-glass);
-      border: 1px solid var(--color-glass-border);
-      color: var(--color-text-secondary);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: var(--color-text-primary);
+      
+      &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+    }
+    
+    &--accent {
+      background: linear-gradient(135deg, rgba(34, 211, 238, 0.3), rgba(168, 85, 247, 0.3));
+      border: 1px solid rgba(34, 211, 238, 0.5);
+      color: #fff;
+      
+      &:hover:not(:disabled) {
+        background: linear-gradient(135deg, rgba(34, 211, 238, 0.4), rgba(168, 85, 247, 0.4));
+        border-color: rgba(34, 211, 238, 0.6);
+      }
     }
   }
   
@@ -1273,6 +1337,43 @@ async function measureDESSpeed() {
     border-radius: var(--radius-md);
     color: var(--color-error);
     font-size: 0.875rem;
+  }
+  
+  // Quick actions after encryption
+  &__quick-actions {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-glass-border);
+  }
+  
+  &__key-display {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  &__key-label {
+    font-size: 0.813rem;
+    color: var(--color-text-muted);
+  }
+  
+  &__key-value {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--color-accent);
+    background: var(--color-bg-secondary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+  }
+  
+  &__action-buttons {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
   }
   
   // Workspace

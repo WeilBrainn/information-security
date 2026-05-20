@@ -226,7 +226,7 @@ export function randomBigInt(min: bigint, max: bigint): bigint {
 
 /**
  * Генерация большого простого числа заданной битовой длины
- * Асимп����отика: O(bits³ * log(bits)) в среднем
+ * Асимптотика: O(bits³ * log(bits)) в среднем
  */
 export function generatePrime(bits: number): bigint {
   // Для демонстрации используем предварительно вычисленные простые числа
